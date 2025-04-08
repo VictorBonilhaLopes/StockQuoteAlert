@@ -60,7 +60,7 @@ namespace StockQuoteAlert
                 }
             }
 
-
+            //csMail.Set();
             //csMail.BuildMail("");
             //csMail.SendMail();
         }
