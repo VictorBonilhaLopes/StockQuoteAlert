@@ -9,7 +9,6 @@
 *.user
 *.userosscache
 *.sln.docstates
-StockQuoteAlert/appsettings.json
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -362,6 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/StockQuoteAlert/appsettings.json
 /.gitignore
+
+# Ignorar configurações sensíveis
 /StockQuoteAlert/appsettings.json
