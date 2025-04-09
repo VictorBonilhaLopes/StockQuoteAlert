@@ -364,3 +364,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /StockQuoteAlert/appsettings.json
 /.gitignore
+/StockQuoteAlert/appsettings.json
