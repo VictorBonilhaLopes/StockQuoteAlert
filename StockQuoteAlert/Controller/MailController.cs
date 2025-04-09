@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
+using System.Runtime.InteropServices.JavaScript;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -15,50 +17,36 @@ namespace StockQuoteAlert.Controller
         Email csEmail = new Email();
         MailMessage? mailMessage = null;
 
-        public void Set()
-        {
-            var json = File.ReadAllText("appsettings.json");
-            var config = JObject.Parse(json);
-
-            csEmail.Remetente = config["Email"]?["From"]?.ToString() ?? "";
-            csEmail.Senha = config["Email"]?["Password"]?.ToString() ?? "";
-            csEmail.Destinatario = config["Email"]?["To"]?.ToString() ?? "";
-        }
-
         public bool ReadMail()
         {
             bool ok = false;
 
-            if (string.IsNullOrEmpty((csEmail.Remetente)))
+            string strDesktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            string strCaminhoArqEx = Path.Combine(strDesktop, "Exemplo_ConfigMail.txt");
+            using (StreamWriter writer = new StreamWriter(strCaminhoArqEx))
             {
-                string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-                string filePath = Path.Combine(desktopPath, "Exemplo_ConfigMail.txt");
-                using (StreamWriter writer = new StreamWriter(filePath))
-                {
-                    writer.WriteLine("Remetente: remetente@gmail.com ");
-                    writer.WriteLine("Senha: 123456");
-                    writer.WriteLine("Destinatario: destinatario@gmail.com");
-                    writer.WriteLine("Servidor SMTP: smtp.gmail.com(exemplo gmail)");
-                    writer.WriteLine("Porta: 587(exemplo gmail)");
-                    writer.WriteLine("EnableSsl: true ou false");
-                    writer.WriteLine("****Edite os dados desse arquivo se preferir e renomei-o****");
-                }
-
-                Console.WriteLine($"Arquivo criado em: {filePath}");
+                writer.WriteLine("Remetente: remetente@gmail.com ");
+                writer.WriteLine("Senha: 123456");
+                writer.WriteLine("Destinatario: destinatario@gmail.com");
+                writer.WriteLine("Servidor SMTP: smtp.gmail.com(exemplo gmail)");
+                writer.WriteLine("Porta: 587(exemplo gmail)");
+                writer.WriteLine("EnableSsl: true ou false");
+                writer.WriteLine("****Edite os dados desse arquivo se preferir e renomei-o****");
             }
 
+            Console.WriteLine($"Arquivo criado em: {strCaminhoArqEx}");
+            File.Open(strCaminhoArqEx, FileMode.Open);
 
-            string Desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             Console.WriteLine("Verifique o modelo criado para poder fazer a configuração de acesso");
-            Console.WriteLine("Digite o nome do arquivo de configuração localizado na área de trabalho:");
-            string nomeArquivo = Console.ReadLine();
-            string caminho = Path.Combine(Desktop, nomeArquivo);
+            Console.WriteLine("Digite o nome do arquivo de configuração localizado na área de trabalho e aperte Enter:");
+            string strNomeArquivo = Console.ReadLine();
+            string strCaminho = Path.Combine(strDesktop, strNomeArquivo);
 
-            if (File.Exists(caminho))
+            if (File.Exists(strCaminho))
             {
                 try
                 {
-                    var Campos = File.ReadAllLines(caminho);
+                    var Campos = File.ReadAllLines(strCaminho);
                     int intPorta = 0;
                     bool booEnableSsl;
 
@@ -92,14 +80,18 @@ namespace StockQuoteAlert.Controller
                         }
                     }
 
-                    mailMessage = new MailMessage(csEmail.Remetente, csEmail.Destinatario);
-                    ok = true;
+                    if (ValidaCampos())
+                    {
+                        mailMessage = new MailMessage(csEmail.Remetente, csEmail.Destinatario);
+                        ok = true;
+                    }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    Console.WriteLine("Erro ao ler o arquivo: " + ex.Message);
                     ok = false;
                 }
-                
+
             }
             else
             {
@@ -109,30 +101,38 @@ namespace StockQuoteAlert.Controller
             return ok;
         }
 
-        public void SendMailVenda(string strBody)
+        private bool ValidaCampos()
         {
-            mailMessage.Subject = "Venda";
+            return !string.IsNullOrEmpty(csEmail.Remetente)
+                && !string.IsNullOrEmpty(csEmail.Senha)
+                && !string.IsNullOrEmpty(csEmail.Destinatario)
+                && !string.IsNullOrEmpty(csEmail.ServidorSMTP)
+                && csEmail.Porta > 0;
+        }
+
+        public void SendMail(string strOperacao, string strAtivo, string strHorario, decimal decPrecoClose, string strCurrency, decimal decReferencia)
+        {
+            string strColor = strOperacao != "Compra" ? "#dc3545" : "#28a745";
+
+            mailMessage.Subject = strOperacao;
             mailMessage.IsBodyHtml = true;
-            mailMessage.Body = "<p> " + strBody + "</p>";
+            mailMessage.Body = "<div style='font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;'>" +
+                                    "<div style='max-width: 600px; margin: 0 auto; background-color: #fff; border-radius: 10px; padding: 20px; color: #333;'>" +
+                                        "<h2 style='color: " + strColor + ";'>Alerta de " + strOperacao + " - Ativo Financeiro</h2>" +
+                                        "<p>Foi identificado um momento oportuno para <strong>" + strOperacao.ToLower() + "</strong> do ativo <strong style='color: " + strColor + ";'>" + strAtivo + "</strong>.</p>" +
+                                        "<p>Detalhes da recomendação:</p>" +
+                                            "<ul>" +
+                                                "<li><strong>Horário:</strong> " + strHorario + "</li>" +
+                                                "<li><strong>Valor Atual:</strong> R$ " + decPrecoClose.ToString("N2") + "</li>" +
+                                                "<li><strong>Valor de " + strOperacao + " Alvo:</strong> R$ " + decReferencia.ToString("N2") + "</li>" +
+                                            "</ul>" +
+                                        "<p>Considere realizar a " + strOperacao.ToLower() + " de acordo com sua estratégia de investimentos.</p>" +
+                                    "</div>" +
+                                "</div>";
+
             mailMessage.SubjectEncoding = Encoding.GetEncoding("UTF-8");
             mailMessage.BodyEncoding = Encoding.GetEncoding("UTF-8");
 
-            SendMail();
-        }
-
-        public void SendMailCompra(string strBody)
-        {
-            mailMessage.Subject = "Compra";
-            mailMessage.IsBodyHtml = true;
-            mailMessage.Body = "<p> " + strBody + "</p>";
-            mailMessage.SubjectEncoding = Encoding.GetEncoding("UTF-8");
-            mailMessage.BodyEncoding = Encoding.GetEncoding("UTF-8");
-
-            SendMail();
-        }
-
-        private void SendMail()
-        {
             SmtpClient smtpClient = new SmtpClient(csEmail.ServidorSMTP, csEmail.Porta);
 
             smtpClient.UseDefaultCredentials = false;

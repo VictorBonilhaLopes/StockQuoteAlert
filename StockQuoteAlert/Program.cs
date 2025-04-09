@@ -21,13 +21,24 @@ namespace StockQuoteAlert
 
             if (csMail.ReadMail())
             {
-                Console.WriteLine("Digite os parametros para a pesquisa! Siga e exemplo abaixo:");
-                Console.WriteLine("<Ativo> <Referencial Venda> <Referencial Compra>");
-                args = Convert.ToString(Console.ReadLine()).Split(' ');
+                Console.WriteLine("Digite os parametros para a pesquisa! Siga o exemplo abaixo:");
+                Console.WriteLine("<Ativo>/<Referencial Venda>/<Referencial Compra>");
+                Console.WriteLine("PETR4/33.40/32.01");
+                Console.WriteLine("Apos digitar aperte Enter para prosseguir...");
+                args = Convert.ToString(Console.ReadLine()).Split('/');
 
-                strAtivo = args[0].ToString();
-                decimal.TryParse(args[1].ToString(), CultureInfo.InvariantCulture, out decVenda);
-                decimal.TryParse(args[2].ToString(), CultureInfo.InvariantCulture, out decCompra);
+                if (args.Length != 3)
+                {
+                    Console.WriteLine("Digite parametros validos para o monitoramento!");
+                    return;
+                }
+                else if(!decimal.TryParse(args[1].ToString().Trim(), CultureInfo.InvariantCulture, out decVenda) || !decimal.TryParse(args[2].ToString().Trim(), CultureInfo.InvariantCulture, out decCompra))
+                {
+                    Console.WriteLine("Digite referenciais validos para o monitoramento!");
+                    return;
+                }
+
+                strAtivo = args[0].ToString().Trim();
 
                 var strContent = csAPI.GetStock(strAtivo);
                 if (strContent.StatusCode == HttpStatusCode.OK)
@@ -43,26 +54,38 @@ namespace StockQuoteAlert
                         }
                     }
 
+                    string strCurrency = obj["meta"]["currency"].ToString();
                     foreach (var item in obj["values"])
                     {
-                        if (decimal.Parse(item["close"].ToString(), CultureInfo.InvariantCulture) > decVenda)
+                        decimal decClose = Convert.ToDecimal(item["close"].ToString().Trim(), CultureInfo.InvariantCulture);
+                        string strHorario = item["datetime"].ToString();
+                        if (decClose > decVenda)
                         {
-                            csMail.SendMailVenda("no horario " + item["datetime"].ToString() + " Vende, valor de " + item["close"].ToString());
+                            csMail.SendMail("Venda", strAtivo, strHorario, decClose, strCurrency, decVenda);
                             Console.WriteLine("Venda");
                         }
-                        else if (decimal.Parse(item["close"].ToString(), CultureInfo.InvariantCulture) < decCompra)
+                        else if (decClose < decCompra)
                         {
-                            csMail.SendMailCompra("no horario " + item["datetime"].ToString() + " Compra, valor de " + item["close"].ToString());
+                            csMail.SendMail("Compra", strAtivo, strHorario, decClose, strCurrency, decCompra);
                             Console.WriteLine("Compra");
                         }
                         else
                         {
-                            Console.WriteLine(item["close"].ToString());
+                            Console.WriteLine(decClose + " " + strCurrency);
                         }
 
                         Thread.Sleep(15000);
                     }
                 }
+                else
+                {
+                    Console.WriteLine("Erro ao realizar pesquisa, tente novamente.");
+                    return;
+                }
+            }
+            else
+            {
+                Console.WriteLine("Erro ao tentar ler arquivo de Email! Tente novamente.");
             }
         }
     }

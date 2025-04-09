@@ -12,6 +12,12 @@ namespace StockQuoteAlert.Controller
     {
         public RestResponse GetStock(string strStock)
         {
+            if (!File.Exists("appsettings.json"))
+            {
+                Console.WriteLine("Erro ao encontrar o arquivo de configuração(appsettings.json) ");
+                return null;
+            }
+
             var json = File.ReadAllText("appsettings.json");
             var config = JObject.Parse(json);
             string strToken = config["Token"].ToString();
