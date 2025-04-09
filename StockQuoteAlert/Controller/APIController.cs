@@ -8,7 +8,7 @@ using RestSharp;
 
 namespace StockQuoteAlert.Controller
 {
-    class API
+    class APIController
     {
         public RestResponse GetStock(string strStock)
         {

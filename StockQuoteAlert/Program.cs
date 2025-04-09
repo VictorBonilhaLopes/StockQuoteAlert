@@ -6,8 +6,6 @@ using System.Net.NetworkInformation;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using StockQuoteAlert.Controller;
-using static StockQuoteAlert.Controller.API;
-using static StockQuoteAlert.Controller.Mail;
 
 namespace StockQuoteAlert
 {
@@ -15,54 +13,57 @@ namespace StockQuoteAlert
     {
         static void Main(string[] args)
         {
-            Mail csMail = new Mail();
-            API csAPI = new API();
+            MailController csMail = new MailController();
+            APIController csAPI = new APIController();
             string strAtivo = string.Empty;
             decimal decVenda = 0;
             decimal decCompra = 0;
 
-            Console.WriteLine("Digite os parametros para a pesquisa! Siga e exemplo abaixo:");
-            Console.WriteLine("<Ativo> <Referencial Venda> <Referencial Compra>");
-            args = Convert.ToString(Console.ReadLine()).Split(' ');
-
-            strAtivo = args[0].ToString();
-            decimal.TryParse(args[1].ToString(), CultureInfo.InvariantCulture, out decVenda);
-            decimal.TryParse(args[2].ToString(), CultureInfo.InvariantCulture, out decCompra);
-
-            var strContent = csAPI.GetStock(strAtivo);
-            if (strContent.StatusCode == HttpStatusCode.OK)
+            if (csMail.ReadMail())
             {
-                JObject obj = JObject.Parse(strContent.Content);
+                Console.WriteLine("Digite os parametros para a pesquisa! Siga e exemplo abaixo:");
+                Console.WriteLine("<Ativo> <Referencial Venda> <Referencial Compra>");
+                args = Convert.ToString(Console.ReadLine()).Split(' ');
 
-                if (obj.ContainsKey("code"))
-                {
-                    if (obj["code"].ToString() != "200")
-                    {
-                        Console.WriteLine("Ativo nao encontrado! Realize novamente a pesquisa.");
-                        return;
-                    }
-                }
+                strAtivo = args[0].ToString();
+                decimal.TryParse(args[1].ToString(), CultureInfo.InvariantCulture, out decVenda);
+                decimal.TryParse(args[2].ToString(), CultureInfo.InvariantCulture, out decCompra);
 
-                foreach (var item in obj["values"])
+                var strContent = csAPI.GetStock(strAtivo);
+                if (strContent.StatusCode == HttpStatusCode.OK)
                 {
-                    if (decimal.Parse(item["close"].ToString(), CultureInfo.InvariantCulture) > decVenda)
+                    JObject obj = JObject.Parse(strContent.Content);
+
+                    if (obj.ContainsKey("code"))
                     {
-                        Console.WriteLine("no horario " + item["datetime"].ToString() + " Vende");
+                        if (obj["code"].ToString() != "200")
+                        {
+                            Console.WriteLine("Ativo nao encontrado! Realize novamente a pesquisa.");
+                            return;
+                        }
                     }
-                    else if (decimal.Parse(item["close"].ToString(), CultureInfo.InvariantCulture) < decCompra)
+
+                    foreach (var item in obj["values"])
                     {
-                        Console.WriteLine("no horario " + item["datetime"].ToString() + " Compra");
-                    }
-                    else
-                    {
-                        Console.WriteLine(item["close"].ToString());
+                        if (decimal.Parse(item["close"].ToString(), CultureInfo.InvariantCulture) > decVenda)
+                        {
+                            csMail.SendMailVenda("no horario " + item["datetime"].ToString() + " Vende, valor de " + item["close"].ToString());
+                            Console.WriteLine("Venda");
+                        }
+                        else if (decimal.Parse(item["close"].ToString(), CultureInfo.InvariantCulture) < decCompra)
+                        {
+                            csMail.SendMailCompra("no horario " + item["datetime"].ToString() + " Compra, valor de " + item["close"].ToString());
+                            Console.WriteLine("Compra");
+                        }
+                        else
+                        {
+                            Console.WriteLine(item["close"].ToString());
+                        }
+
+                        Thread.Sleep(15000);
                     }
                 }
             }
-
-            //csMail.Set();
-            //csMail.BuildMail("");
-            //csMail.SendMail();
         }
     }
 }
