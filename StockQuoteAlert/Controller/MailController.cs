@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
@@ -35,11 +36,12 @@ namespace StockQuoteAlert.Controller
             }
 
             Console.WriteLine($"Arquivo criado em: {strCaminhoArqEx}");
-            File.Open(strCaminhoArqEx, FileMode.Open);
+            Process.Start("notepad.exe", strCaminhoArqEx);
 
             Console.WriteLine("Verifique o modelo criado para poder fazer a configuração de acesso");
-            Console.WriteLine("Digite o nome do arquivo de configuração localizado na área de trabalho e aperte Enter:");
+            Console.WriteLine("Digite o nome do arquivo de configuração e sua extencao(.txt), localizado na área de trabalho e aperte Enter:");
             string strNomeArquivo = Console.ReadLine();
+            strNomeArquivo = !strNomeArquivo.Contains(".txt") ? strNomeArquivo += ".txt" : strNomeArquivo;
             string strCaminho = Path.Combine(strDesktop, strNomeArquivo);
 
             if (File.Exists(strCaminho))
@@ -123,8 +125,8 @@ namespace StockQuoteAlert.Controller
                                         "<p>Detalhes da recomendação:</p>" +
                                             "<ul>" +
                                                 "<li><strong>Horário:</strong> " + strHorario + "</li>" +
-                                                "<li><strong>Valor Atual:</strong> R$ " + decPrecoClose.ToString("N2") + "</li>" +
-                                                "<li><strong>Valor de " + strOperacao + " Alvo:</strong> R$ " + decReferencia.ToString("N2") + "</li>" +
+                                                "<li><strong>Valor Atual:</strong> R$ " + decPrecoClose.ToString("N2") + strCurrency +"</li>" +
+                                                "<li><strong>Valor de " + strOperacao + " Alvo:</strong> R$ " + decReferencia.ToString("N2") + strCurrency +"</li>" +
                                             "</ul>" +
                                         "<p>Considere realizar a " + strOperacao.ToLower() + " de acordo com sua estratégia de investimentos.</p>" +
                                     "</div>" +

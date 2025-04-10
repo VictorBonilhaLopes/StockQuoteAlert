@@ -11,34 +11,39 @@ namespace StockQuoteAlert
 {
     class Program
     {
+        static MailController csMail = new MailController();
+        static APIController csAPI = new APIController();
+        static string strAtivo = string.Empty;
+        static decimal decVenda = 0;
+        static decimal decCompra = 0;
+
         static void Main(string[] args)
         {
-            MailController csMail = new MailController();
-            APIController csAPI = new APIController();
-            string strAtivo = string.Empty;
-            decimal decVenda = 0;
-            decimal decCompra = 0;
-
             if (csMail.ReadMail())
             {
-                Console.WriteLine("Digite os parametros para a pesquisa! Siga o exemplo abaixo:");
-                Console.WriteLine("<Ativo>/<Referencial Venda>/<Referencial Compra>");
-                Console.WriteLine("PETR4/33.40/32.01");
-                Console.WriteLine("Apos digitar aperte Enter para prosseguir...");
-                args = Convert.ToString(Console.ReadLine()).Split('/');
-
-                if (args.Length != 3)
+                if (args.Length == 1)
                 {
-                    Console.WriteLine("Digite parametros validos para o monitoramento!");
-                    return;
-                }
-                else if(!decimal.TryParse(args[1].ToString().Trim(), CultureInfo.InvariantCulture, out decVenda) || !decimal.TryParse(args[2].ToString().Trim(), CultureInfo.InvariantCulture, out decCompra))
-                {
-                    Console.WriteLine("Digite referenciais validos para o monitoramento!");
-                    return;
-                }
+                    string strDados = args[0].ToString();
+                    string[] parametros = strDados.Split('/');
 
-                strAtivo = args[0].ToString().Trim();
+                    if (!ValidaParametros(parametros))
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Digite os parametros para a pesquisa! Siga o exemplo abaixo:");
+                    Console.WriteLine("<Ativo>/<Referencial Venda>/<Referencial Compra>");
+                    Console.WriteLine("PETR4/33.40/32.01");
+                    Console.WriteLine("Apos digitar aperte Enter para prosseguir...");
+                    args = Convert.ToString(Console.ReadLine()).Split('/');
+
+                    if (!ValidaParametros(args))
+                    {
+                        return;
+                    }
+                }
 
                 var strContent = csAPI.GetStock(strAtivo);
                 if (strContent.StatusCode == HttpStatusCode.OK)
@@ -55,10 +60,10 @@ namespace StockQuoteAlert
                     }
 
                     string strCurrency = obj["meta"]["currency"].ToString();
-                    foreach (var item in obj["values"])
+                    foreach (var item in obj["values"].Reverse()) //para simular a requisicao em tempo real, foi invertido a ordem dos dados obtidos, indo assim do mais antigo para o mais novo
                     {
                         decimal decClose = Convert.ToDecimal(item["close"].ToString().Trim(), CultureInfo.InvariantCulture);
-                        string strHorario = item["datetime"].ToString();
+                        string strHorario = Convert.ToDateTime(item["datetime"].ToString()).ToString("dd/MM/yyyy HH:mm:ss");
                         if (decClose > decVenda)
                         {
                             csMail.SendMail("Venda", strAtivo, strHorario, decClose, strCurrency, decVenda);
@@ -71,10 +76,10 @@ namespace StockQuoteAlert
                         }
                         else
                         {
-                            Console.WriteLine(decClose + " " + strCurrency);
+                            Console.WriteLine("Valor no horario: " + strHorario +" R$"+ decClose.ToString("N2") + " " + strCurrency);
                         }
 
-                        Thread.Sleep(15000);
+                        Thread.Sleep(15000); //simulando requisições espaçadas, se fosse utilizado uma API que disponibilizasse os dados em tempo real, seria refeita a requisição de minuto em minuto
                     }
                 }
                 else
@@ -83,10 +88,26 @@ namespace StockQuoteAlert
                     return;
                 }
             }
-            else
+        }
+
+        private static bool ValidaParametros(string[] parametros)
+        {
+            bool valida = true;
+
+            if (parametros.Length != 3)
             {
-                Console.WriteLine("Erro ao tentar ler arquivo de Email! Tente novamente.");
+                Console.WriteLine("Digite parametros validos para o monitoramento!");
+                valida = false;
             }
+            else if (!decimal.TryParse(parametros[1].ToString().Trim(), CultureInfo.InvariantCulture, out decVenda) || !decimal.TryParse(parametros[2].ToString().Trim(), CultureInfo.InvariantCulture, out decCompra))
+            {
+                Console.WriteLine("Digite referenciais validos para o monitoramento!");
+                valida = false;
+            }
+
+            strAtivo = parametros[0].ToString().Trim();
+
+            return valida;
         }
     }
 }
