@@ -10,13 +10,14 @@ Antes de executar ou debugar a aplicação, é necessário ter os seguintes requ
 
 ## 🔌 API utilizada
 
-A aplicação utiliza a API da [TwelveData](https://twelvedata.com/) para buscar as informações de cotações e ativos.
+A aplicação utiliza a API da [TwelveData](https://twelvedata.com/) para obter informações de cotações e ativos financeiros.
 
 ## 🛠️ Configuração
 
-Antes de rodar o projeto, é necessário configurar o arquivo `appsettings.json`, localizado dentro da pasta `StockQuoteAlert\StockQuoteAlert` (mesma pasta onde está o `.csproj`), com seu token da TwelveData.  
+Antes de rodar o projeto, é necessário configurar o arquivo `appsettings.example.json`, localizado na pasta `StockQuoteAlert\StockQuoteAlert` (mesma pasta onde está o `.csproj`), com seu token da TwelveData.
 
-Abra o arquivo e edite o valor da chave `Token`, substituindo `"MEUTOKEN"` pelo seu token válido:
+1. Renomeie o arquivo para `appsettings.json`.
+2. Edite o valor da chave `Token`, substituindo `"MEUTOKEN"` pelo seu token válido:
 
 ```json
 {
@@ -26,14 +27,41 @@ Abra o arquivo e edite o valor da chave `Token`, substituindo `"MEUTOKEN"` pelo 
 
 ## 🚀 Como rodar
 
-Após configurar o token, a aplicação pode ser executada de duas maneiras:
+Após configurar o token, a aplicação pode ser executada de três maneiras:
 
-- **Executando diretamente o executável compilado**:
+---
+
+🔹 **1. Pela linha de comando (sem compilar manualmente)**  
+Acesse o diretório `StockQuoteAlert\StockQuoteAlert` no terminal e execute:
 
 ```bash
-StockQuoteAlert\bin\Release\net8.0\StockQuoteAlert.exe
+dotnet run -- PETR4/33.45/33.10
 ```
-ou
 
-- **Utilizando uma IDE como o Visual Studio**:  
-   Basta pressionar `F5` para iniciar a aplicação em modo de depuração (debug).
+Substitua os valores pelo código da ação e os preços desejados.
+
+---
+
+🔹 **2. Através de uma IDE (como o Visual Studio)**  
+Abra o projeto na IDE e pressione `F5` para executar em modo de depuração (debug).
+
+---
+
+🔹 **3. Compilando manualmente para gerar o executável** *(opcional)*  
+Você também pode compilar o projeto e rodar o executável diretamente:
+
+```bash
+dotnet build
+```
+
+O executável será gerado em:
+
+```
+StockQuoteAlert\StockQuoteAlert\bin\Debug\net8.0\
+```
+
+Para executar, utilize o seguinte formato de comando dentro dessa pasta:
+
+```bash
+StockQuoteAlert.exe PETR4/33.45/33.10
+```
