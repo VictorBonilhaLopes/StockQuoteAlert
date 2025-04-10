@@ -1,14 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Net.Mail;
-using System.Runtime.InteropServices.JavaScript;
-using System.Runtime.Intrinsics.X86;
 using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 using StockQuoteAlert.Model;
 
 namespace StockQuoteAlert.Controller
