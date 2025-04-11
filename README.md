@@ -11,6 +11,7 @@ Antes de executar ou debugar a aplicação, é necessário ter os seguintes requ
 ## 🔌 API utilizada
 
 A aplicação utiliza a API da [TwelveData](https://twelvedata.com/) para obter informações de cotações e ativos financeiros.
+⚠️ Observação: a API é internacional, portanto alguns dados podem ser originados de outras bolsas de valores fora do Brasil. Verifique a moeda retornada da pesquisa para garantir que os dados estejam de acordo com o mercado desejado.
 
 ## 🛠️ Configuração
 

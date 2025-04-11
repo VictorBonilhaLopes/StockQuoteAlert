@@ -119,8 +119,8 @@ namespace StockQuoteAlert.Controller
                                         "<p>Detalhes da recomendação:</p>" +
                                             "<ul>" +
                                                 "<li><strong>Horário:</strong> " + strHorario + "</li>" +
-                                                "<li><strong>Valor Atual:</strong> R$ " + decPrecoClose.ToString("N2") + strCurrency +"</li>" +
-                                                "<li><strong>Valor de " + strOperacao + " Alvo:</strong> R$ " + decReferencia.ToString("N2") + strCurrency +"</li>" +
+                                                "<li><strong>Valor Atual:</strong> R$ " + decPrecoClose.ToString("N2") + strCurrency + "</li>" +
+                                                "<li><strong>Valor de " + strOperacao + " Alvo:</strong> R$ " + decReferencia.ToString("N2") + strCurrency + "</li>" +
                                             "</ul>" +
                                         "<p>Considere realizar a " + strOperacao.ToLower() + " de acordo com sua estratégia de investimentos.</p>" +
                                     "</div>" +
@@ -129,14 +129,23 @@ namespace StockQuoteAlert.Controller
             mailMessage.SubjectEncoding = Encoding.GetEncoding("UTF-8");
             mailMessage.BodyEncoding = Encoding.GetEncoding("UTF-8");
 
-            SmtpClient smtpClient = new SmtpClient(csEmail.ServidorSMTP, csEmail.Porta);
+            try
+            {
+                SmtpClient smtpClient = new SmtpClient(csEmail.ServidorSMTP, csEmail.Porta);
 
-            smtpClient.UseDefaultCredentials = false;
-            smtpClient.Credentials = new NetworkCredential(csEmail.Remetente, csEmail.Senha);
+                smtpClient.UseDefaultCredentials = false;
+                smtpClient.Credentials = new NetworkCredential(csEmail.Remetente, csEmail.Senha);
 
-            smtpClient.EnableSsl = csEmail.EnableSsl;
+                smtpClient.EnableSsl = csEmail.EnableSsl;
 
-            smtpClient.Send(mailMessage);
+                smtpClient.Send(mailMessage);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Erro ao tentar enviar o e-mail. Verifique o arquivo de configuração.");
+                Console.WriteLine("Mensagem: " + ex.ToString());
+                Environment.Exit(1);
+            }
         }
     }
 }
